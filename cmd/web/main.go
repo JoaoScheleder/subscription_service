@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"subscription_service/db/postgres"
+	"subscription_service/session"
 )
 
 const PORT = "8080"
@@ -20,6 +21,12 @@ func main() {
 	defer pool.Close()
 
 	// create sessions
+	sessionManager, redisPool, err := session.NewManager(ctx)
+	if err != nil {
+		log.Fatalf("create session manager: %v", err)
+	}
+	defer redisPool.Close()
+	log.Printf("session manager initialized (lifetime=%s)", sessionManager.Lifetime)
 
 	// create channels
 

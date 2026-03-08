@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"subscription_service/config/env"
 )
 
 type Config struct {
@@ -47,25 +48,25 @@ func DefaultConfig() Config {
 func LoadConfigFromEnv() (Config, error) {
 	cfg := DefaultConfig()
 
-	cfg.Host = getEnv("DB_HOST", cfg.Host)
-	cfg.User = getEnv("DB_USER", cfg.User)
-	cfg.Password = getEnv("DB_PASSWORD", cfg.Password)
-	cfg.Database = getEnv("DB_NAME", cfg.Database)
-	cfg.SSLMode = getEnv("DB_SSLMODE", cfg.SSLMode)
+	cfg.Host = env.String("DB_HOST", cfg.Host)
+	cfg.User = env.String("DB_USER", cfg.User)
+	cfg.Password = env.String("DB_PASSWORD", cfg.Password)
+	cfg.Database = env.String("DB_NAME", cfg.Database)
+	cfg.SSLMode = env.String("DB_SSLMODE", cfg.SSLMode)
 
-	port, err := getEnvInt("DB_PORT", cfg.Port)
+	port, err := env.Int("DB_PORT", cfg.Port)
 	if err != nil {
 		return Config{}, err
 	}
 	cfg.Port = port
 
-	maxConns, err := getEnvInt("DB_MAX_CONNS", int(cfg.MaxConns))
+	maxConns, err := env.Int("DB_MAX_CONNS", int(cfg.MaxConns))
 	if err != nil {
 		return Config{}, err
 	}
 	cfg.MaxConns = int32(maxConns)
 
-	minConns, err := getEnvInt("DB_MIN_CONNS", int(cfg.MinConns))
+	minConns, err := env.Int("DB_MIN_CONNS", int(cfg.MinConns))
 	if err != nil {
 		return Config{}, err
 	}
@@ -75,25 +76,25 @@ func LoadConfigFromEnv() (Config, error) {
 		return Config{}, fmt.Errorf("invalid pool config: DB_MIN_CONNS (%d) cannot be greater than DB_MAX_CONNS (%d)", cfg.MinConns, cfg.MaxConns)
 	}
 
-	maxConnLifetime, err := getEnvDuration("DB_MAX_CONN_LIFETIME", cfg.MaxConnLifetime)
+	maxConnLifetime, err := env.Duration("DB_MAX_CONN_LIFETIME", cfg.MaxConnLifetime)
 	if err != nil {
 		return Config{}, err
 	}
 	cfg.MaxConnLifetime = maxConnLifetime
 
-	maxConnIdleTime, err := getEnvDuration("DB_MAX_CONN_IDLE_TIME", cfg.MaxConnIdleTime)
+	maxConnIdleTime, err := env.Duration("DB_MAX_CONN_IDLE_TIME", cfg.MaxConnIdleTime)
 	if err != nil {
 		return Config{}, err
 	}
 	cfg.MaxConnIdleTime = maxConnIdleTime
 
-	healthCheckPeriod, err := getEnvDuration("DB_HEALTHCHECK_PERIOD", cfg.HealthCheckPeriod)
+	healthCheckPeriod, err := env.Duration("DB_HEALTHCHECK_PERIOD", cfg.HealthCheckPeriod)
 	if err != nil {
 		return Config{}, err
 	}
 	cfg.HealthCheckPeriod = healthCheckPeriod
 
-	connectTimeout, err := getEnvDuration("DB_CONNECT_TIMEOUT", cfg.ConnectTimeout)
+	connectTimeout, err := env.Duration("DB_CONNECT_TIMEOUT", cfg.ConnectTimeout)
 	if err != nil {
 		return Config{}, err
 	}
@@ -188,39 +189,4 @@ func ConnectConn(ctx context.Context) (*pgx.Conn, error) {
 	}
 
 	return conn, nil
-}
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok && value != "" {
-		return value
-	}
-	return fallback
-}
-
-func getEnvInt(key string, fallback int) (int, error) {
-	value := getEnv(key, "")
-	if value == "" {
-		return fallback, nil
-	}
-
-	parsed, err := strconv.Atoi(value)
-	if err != nil {
-		return 0, fmt.Errorf("invalid integer for %s: %q", key, value)
-	}
-
-	return parsed, nil
-}
-
-func getEnvDuration(key string, fallback time.Duration) (time.Duration, error) {
-	value := getEnv(key, "")
-	if value == "" {
-		return fallback, nil
-	}
-
-	parsed, err := time.ParseDuration(value)
-	if err != nil {
-		return 0, fmt.Errorf("invalid duration for %s: %q", key, value)
-	}
-
-	return parsed, nil
 }
