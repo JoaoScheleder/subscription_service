@@ -1,5 +1,4 @@
 package env
-package env
 
 import (
 	"fmt"
