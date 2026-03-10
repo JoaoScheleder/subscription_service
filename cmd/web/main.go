@@ -4,9 +4,12 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"subscription_service/db/postgres"
 	"subscription_service/session"
 	"sync"
+	"syscall"
 )
 
 const PORT = "8080"
@@ -65,4 +68,22 @@ func (app *Config) serve() {
 	if err != nil {
 		log.Fatalf("listen and serve: %v", err)
 	}
+}
+
+func (app *Config) ListenForShutdown() {
+	// graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	app.shutdown()
+	os.Exit(0)
+}
+
+func (app *Config) shutdown() {
+	// perform any necessary cleanup here (e.g. close database connections, stop background workers, etc.)
+	app.InfoLog.Println("shutting down server...")
+
+	app.WaitGroup.Wait()
+
+	app.InfoLog.Println("server stopped")
 }
