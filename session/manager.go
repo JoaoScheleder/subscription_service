@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"encoding/gob"
 	"net/http"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/gomodule/redigo/redis"
 
 	redisdb "subscription_service/db/redis"
+	data "subscription_service/models"
 )
 
 func NewManager(ctx context.Context) (*scs.SessionManager, *redis.Pool, error) {
@@ -17,7 +19,7 @@ func NewManager(ctx context.Context) (*scs.SessionManager, *redis.Pool, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-
+	gob.Register(data.User{})
 	manager := scs.New()
 	manager.Store = redisstore.New(pool)
 	manager.Lifetime = 24 * time.Hour
