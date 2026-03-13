@@ -11,7 +11,7 @@ build:
 ## run: builds and runs the application
 run: build
 	@echo "Starting..."
-	@set -a; [ -f .env ] && . ./.env; set +a; ./${BINARY_NAME} &
+	@set -a; [ -f .env ] && . ./.env; set +a; ./${BINARY_NAME}
 	@echo "Started!"
 
 ## clean: runs go clean and deletes binaries
@@ -21,8 +21,14 @@ clean:
 	@rm ${BINARY_NAME}
 	@echo "Cleaned!"
 
-## start: an alias to run
+## start: runs the application in the foreground (shows logs)
 start: run
+
+## start-bg: builds and runs the application in the background
+start-bg: build
+	@echo "Starting in background..."
+	@set -a; [ -f .env ] && . ./.env; set +a; ./${BINARY_NAME} &
+	@echo "Started in background!"
 
 ## stop: stops the running application
 stop:

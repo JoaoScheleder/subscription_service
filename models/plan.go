@@ -23,7 +23,7 @@ func (p *Plan) GetAll() ([]*Plan, error) {
 	query := `select id, plan_name, plan_amount created_at, updated_at
 	from plans order by plan_name`
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (p *Plan) GetOne(id int) (*Plan, error) {
 	query := `select id, plan_name, plan_amount, created_at, updated_at from plans where id = $1`
 
 	var plan Plan
-	row := db.QueryRowContext(ctx, query, id)
+	row := db.QueryRow(ctx, query, id)
 
 	err := row.Scan(
 		&plan.ID,
@@ -85,7 +85,7 @@ func (p *Plan) SubscribeUserToPlan(user User, plan Plan) error {
 	stmt := `insert into user_plans (user_id, plan_id, created_at, updated_at)
 			values ($1, $2, $3, $4)`
 
-	_, err := db.ExecContext(ctx, stmt, user.ID, plan.ID, time.Now(), time.Now())
+	_, err := db.Exec(ctx, stmt, user.ID, plan.ID, time.Now(), time.Now())
 	if err != nil {
 		return err
 	}

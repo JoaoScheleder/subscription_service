@@ -1,6 +1,11 @@
 package main
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+
+	"github.com/jackc/pgx/v5"
+)
 
 func (app *Config) HomePage(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "home.page.gohtml", nil)
@@ -31,6 +36,12 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 
 	user, err := app.Models.User.GetByEmail(email)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			app.Session.Put(r.Context(), "error", "Invalid Credentials.")
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
+
 		app.Session.Put(r.Context(), "error", "Invalid Credentials.")
 		app.ErrorLog.Printf("get user by email: %v", err)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -52,7 +63,14 @@ func (app *Config) PostLoginPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) LogoutPage(w http.ResponseWriter, r *http.Request) {
+	err := app.Session.Destroy(r.Context())
+	if err != nil {
+		app.ErrorLog.Printf("destroy session: %v", err)
+		http.Error(w, "unable to logout", http.StatusInternalServerError)
+		return
+	}
 
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func (app *Config) RegisterPage(w http.ResponseWriter, r *http.Request) {

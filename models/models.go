@@ -1,17 +1,18 @@
 package data
 
 import (
-	"database/sql"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const dbTimeout = time.Second * 3
 
-var db *sql.DB
+var db *pgxpool.Pool
 
 // New is the function used to create an instance of the data package. It returns the type
 // Model, which embeds all the types we want to be available to our application.
-func New(dbPool *sql.DB) Models {
+func New(dbPool *pgxpool.Pool) Models {
 	db = dbPool
 
 	return Models{

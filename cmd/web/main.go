@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"subscription_service/db/postgres"
+	data "subscription_service/models"
 	"subscription_service/session"
 	"sync"
 	"syscall"
@@ -50,6 +51,7 @@ func main() {
 		InfoLog:   infoLog,
 		ErrorLog:  errorLog,
 		WaitGroup: wg,
+		Models:    data.New(pool),
 	}
 
 	// set up mail
