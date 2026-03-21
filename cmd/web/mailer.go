@@ -20,9 +20,8 @@ type Mail struct {
 	FromAddress string
 	FromName    string
 	Wait        *sync.WaitGroup
-	MailerChan  *chan Message
-	ErrorChan   *chan error
-	DoneChan    *chan bool
+	MailerChan  chan Message
+	DoneChan    chan bool
 }
 
 type Message struct {
@@ -36,7 +35,23 @@ type Message struct {
 	Template    string
 }
 
+func (app *Config) ListenForMail() {
+	for {
+		select {
+		case msg := <-app.Mailer.MailerChan:
+			if err := app.Mailer.SendMail(msg); err != nil {
+				app.ErrorLog.Printf("error sending mail: %v", err)
+			}
+		case <-app.Mailer.DoneChan:
+			return
+		}
+	}
+}
+
 func (m *Mail) SendMail(msg Message) error {
+
+	defer m.Wait.Done()
+
 	if msg.Template == "" {
 		msg.Template = "mail"
 	}

@@ -11,6 +11,8 @@ import (
 	"subscription_service/session"
 	"sync"
 	"syscall"
+
+	mail "github.com/xhit/go-simple-mail/v2"
 )
 
 const PORT = "8080"
@@ -55,7 +57,9 @@ func main() {
 	}
 
 	// set up mail
+	app.Mailer = app.CreateMail()
 
+	go app.ListenForMail()
 	// listen for connections
 	app.serve()
 }
@@ -88,4 +92,26 @@ func (app *Config) shutdown() {
 	app.WaitGroup.Wait()
 
 	app.InfoLog.Println("server stopped")
+}
+
+func (app *Config) CreateMail() *Mail {
+
+	mailerChan := make(chan Message)
+	doneChan := make(chan bool)
+
+	m := &Mail{
+		Domain:      "localhost",
+		Host:        "localhost",
+		Port:        1025,
+		Username:    "",
+		Password:    "",
+		Encryption:  mail.EncryptionNone,
+		FromAddress: "no-reply@example.com",
+		FromName:    "Example App",
+		Wait:        app.WaitGroup,
+		MailerChan:  mailerChan,
+		DoneChan:    doneChan,
+	}
+
+	return m
 }
