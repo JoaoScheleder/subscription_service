@@ -92,6 +92,9 @@ func (app *Config) shutdown() {
 	app.WaitGroup.Wait()
 
 	app.InfoLog.Println("server stopped")
+
+	close(app.Mailer.DoneChan)
+	close(app.Mailer.MailerChan)
 }
 
 func (app *Config) CreateMail() *Mail {
