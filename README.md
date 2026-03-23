@@ -1,4 +1,12 @@
-# Subscription Service
+<p align="center">
+	<img src="https://go.dev/images/go-logo-blue.svg" alt="Go official logo" width="340">
+</p>
+
+<h1 align="center">Subscription Service</h1>
+
+<p align="center">
+	A professional Go study project focused on practical concurrency with goroutines, channels, WaitGroups, PostgreSQL, Redis, and MailHog.
+</p>
 
 This repository is a study project for learning Go concurrency in a realistic web application. It combines a subscription-style app with background work handled through goroutines, channels, and sync.WaitGroup coordination.
 
