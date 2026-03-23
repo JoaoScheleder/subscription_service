@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	data "subscription_service/models"
 	"time"
 
 	"html/template"
@@ -20,6 +21,7 @@ type TemplateData struct {
 	Error         string
 	Authenticated bool
 	Now           time.Time
+	User          *data.User
 }
 
 func (app *Config) render(w http.ResponseWriter, r *http.Request, tmpl string, templateData *TemplateData) {
@@ -59,15 +61,21 @@ func (app *Config) AddDefaultData(td *TemplateData, r *http.Request) *TemplateDa
 	td.Flash = app.Session.PopString(r.Context(), "flash")
 	td.Warning = app.Session.PopString(r.Context(), "warning")
 	td.Error = app.Session.PopString(r.Context(), "error")
-	if app.IsAuthenticated(r) {
+	if app.IsAuthenticatedUser(r) {
 		td.Authenticated = true
-		// TODO - get more user information
+		user, ok := app.Session.Get(r.Context(), "user").(data.User)
+		if !ok {
+			app.ErrorLog.Printf("error getting user from session")
+			return td
+		} else {
+			td.User = &user
+		}
 	}
 	td.Now = time.Now()
 
 	return td
 }
 
-func (app *Config) IsAuthenticated(r *http.Request) bool {
+func (app *Config) IsAuthenticatedUser(r *http.Request) bool {
 	return app.Session.Exists(r.Context(), "userID")
 }

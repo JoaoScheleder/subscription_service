@@ -11,11 +11,13 @@ import (
 )
 
 type Config struct {
-	Session   *scs.SessionManager
-	DB        *pgxpool.Pool
-	InfoLog   *log.Logger
-	ErrorLog  *log.Logger
-	WaitGroup *sync.WaitGroup
-	Models    data.Models
-	Mailer    *Mail
+	Session       *scs.SessionManager
+	DB            *pgxpool.Pool
+	InfoLog       *log.Logger
+	ErrorLog      *log.Logger
+	WaitGroup     *sync.WaitGroup
+	Models        data.Models
+	Mailer        *Mail
+	ErrorChan     chan error
+	ErrorChanDone chan bool
 }

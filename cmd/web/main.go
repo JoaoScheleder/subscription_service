@@ -48,18 +48,22 @@ func main() {
 	// set up the application config
 
 	app := Config{
-		Session:   sessionManager,
-		DB:        pool,
-		InfoLog:   infoLog,
-		ErrorLog:  errorLog,
-		WaitGroup: wg,
-		Models:    data.New(pool),
+		Session:       sessionManager,
+		DB:            pool,
+		InfoLog:       infoLog,
+		ErrorLog:      errorLog,
+		WaitGroup:     wg,
+		Models:        data.New(pool),
+		ErrorChan:     make(chan error),
+		ErrorChanDone: make(chan bool),
 	}
 
 	// set up mail
 	app.Mailer = app.CreateMail()
 
 	go app.ListenForMail()
+
+	go app.ListenForErrors()
 	// listen for connections
 	app.serve()
 }
@@ -85,6 +89,17 @@ func (app *Config) ListenForShutdown() {
 	os.Exit(0)
 }
 
+func (app *Config) ListenForErrors() {
+	for {
+		select {
+		case err := <-app.ErrorChan:
+			app.ErrorLog.Printf("error: %v", err)
+		case <-app.ErrorChanDone:
+			return
+		}
+	}
+}
+
 func (app *Config) shutdown() {
 	// perform any necessary cleanup here (e.g. close database connections, stop background workers, etc.)
 	app.InfoLog.Println("shutting down server...")
@@ -93,8 +108,13 @@ func (app *Config) shutdown() {
 
 	app.InfoLog.Println("server stopped")
 
+	app.Mailer.DoneChan <- true
+	app.ErrorChanDone <- true
+
 	close(app.Mailer.DoneChan)
 	close(app.Mailer.MailerChan)
+	close(app.ErrorChanDone)
+	close(app.ErrorChan)
 }
 
 func (app *Config) CreateMail() *Mail {

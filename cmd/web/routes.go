@@ -56,5 +56,17 @@ func (app *Config) routes() http.Handler {
 		_, _ = w.Write([]byte("test email sent to MailHog; open http://localhost:8025"))
 	})
 
+	mux.Mount("/auth", app.authRoutes())
+
+	return mux
+}
+
+func (app *Config) authRoutes() http.Handler {
+	mux := chi.NewRouter()
+	mux.Use(app.IsAuthenticated)
+
+	mux.Get("/plans", app.ChooseSubscription)
+	mux.Get("/subscribe", app.SubscribeToPlan)
+
 	return mux
 }
