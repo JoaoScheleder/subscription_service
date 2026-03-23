@@ -263,6 +263,24 @@ func (app *Config) SubscribeToPlan(w http.ResponseWriter, r *http.Request) {
 
 	}()
 
+	// subscribe user to a plan
+
+	err = app.Models.Plan.SubscribeUserToPlan(user, *plan)
+	if err != nil {
+		app.ErrorLog.Printf("subscribe user to plan: %v", err)
+		http.Error(w, "unable to subscribe to plan", http.StatusInternalServerError)
+		return
+	}
+
+	u, err := app.Models.User.GetOne(user.ID)
+	if err != nil {
+		app.ErrorLog.Printf("get user by id: %v", err)
+		http.Error(w, "unable to get user", http.StatusInternalServerError)
+		return
+	}
+
+	app.Session.Put(r.Context(), "user", u)
+
 	app.Session.Put(r.Context(), "flash", fmt.Sprintf("You have subscribed to the %s plan! Please check your email for your invoice and manual.", plan.PlanName))
 	http.Redirect(w, r, "/memebers/plans", http.StatusSeeOther)
 }
